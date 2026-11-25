@@ -27,6 +27,7 @@ const log = (level, msg) =>
   console.log(`${new Date().toISOString()} ${level} mail-service: ${msg}`);
 
 const app = express();
+app.set("trust proxy", 1); // derrière le proxy Vercel (nécessaire pour le rate limit)
 app.use(helmet());
 app.use(express.json({ limit: "1mb" }));
 app.use(rateLimit({ windowMs: 60_000, limit: 60 }));
@@ -125,4 +126,9 @@ app.post("/send-email", requireApiKey, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => log("INFO", `Service démarré sur le port ${PORT}`));
+// En local : node server.js. Sur Vercel : l'app est exportée et gérée par api/index.js
+if (require.main === module) {
+  app.listen(PORT, () => log("INFO", `Service démarré sur le port ${PORT}`));
+}
+
+module.exports = app;
